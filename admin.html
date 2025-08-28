@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Portal</title>
+    <style>
+      @font-face {
+        font-family: "WSWF";
+        font-weight: normal;
+        font-style: normal;
+        src: url(https://static1.squarespace.com/static/67e2ec427693384efd32fd14/t/67e2ef48ad3fd24bbab4c2ae/1742925640408/WWM_Century_Proportional.otf)
+          format("opentype");
+      }
+
+      :root {
+        --heading-font-font-family: "WSWF";
+        --body-font-font-family: "WSWF";
+        --meta-font-font-family: "WSWF";
+        --primary-button-font-font-family: "WSWF";
+        --secondary-button-font-font-family: "WSWF";
+        --tertiary-button-font-font-family: "WSWF";
+        --site-title-font-font-family: "WSWF";
+      }
+
+      * {
+        font-family: "WSWF" !important;
+      }
+      body {
+        background-image: url("background2.png");
+        margin: 0;
+        height: 600px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .hidden {
+        display: none;
+      }
+      .btn-primary {
+        background: black;
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 15px;
+        margin-right: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+      }
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+      #dashboard {
+        margin: 30px auto;
+        padding: 15px;
+        background: #fafafa;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        width: 90%;
+        max-width: 800px;
+      }
+      #login {
+        text-align: center;
+      }
+
+      #login h2 {
+        font-size: 28px;
+        margin-bottom: 20px;
+      }
+      #login label {
+        font-size: 16px;
+      }
+      #login input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        margin-top: 5px;
+        border: 1px solid #bbb;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login">
+      <h2>Admin Login</h2>
+      <label>Username:</label><br />
+      <input type="text" id="loginUser" /><br /><br />
+      <label>Password:</label><br />
+      <input type="password" id="loginPass" /><br /><br />
+      <button onclick="checkLogin()" class="btn-primary">Login</button>
+      <p id="loginMsg" style="color: black"></p>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <h2>Reflections Consent / Recording Log</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Consent</th>
+            <th>File Name</th>
+            <th>Date</th>
+            <th>Timestamp</th>
+            <th>Recording</th>
+          </tr>
+        </thead>
+        <tbody id="csvTableBody"></tbody>
+      </table>
+      <div style="margin-top: 10px">
+        <button onclick="downloadCSV()" class="btn-primary">
+          Download CSV
+        </button>
+        <button
+          onclick="resetLogs()"
+          class="btn-primary"
+          style="background: black"
+        >
+          Reset Logs
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // === Admin Credentials ===
+      const ADMIN_USER = "admin";
+      const ADMIN_PASS = "password123";
+
+      // === CSV Data with RecordingLink column ===
+      let csvData =
+        localStorage.getItem("csvData") ||
+        "Name,Consent,FileName,Date,Timestamp,RecordingLink\n";
+
+      function renderCSVTable() {
+        const tableBody = document.getElementById("csvTableBody");
+        tableBody.innerHTML = "";
+        const rows = csvData.trim().split("\n").slice(1);
+        rows.forEach((row) => {
+          if (!row.trim()) return;
+          const cols = row.split(",");
+          const tr = document.createElement("tr");
+          cols.forEach((col, index) => {
+            const td = document.createElement("td");
+
+            // If it's the RecordingLink column and looks like a URL, make it a clickable link
+            if (index === 5 && col.startsWith("http")) {
+              const a = document.createElement("a");
+              a.href = col;
+              a.textContent = "Download Recording";
+              a.target = "_blank";
+              td.appendChild(a);
+            } else {
+              td.textContent = col || "-";
+            }
+
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function downloadCSV() {
+        const blob = new Blob([csvData], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "consent_data.csv";
+        a.click();
+      }
+
+      function resetLogs() {
+        if (confirm("Are you sure you want to delete all logs? ")) {
+          csvData = "Name,Consent,FileName,Date,Timestamp,RecordingLink\n";
+          localStorage.setItem("csvData", csvData);
+          renderCSVTable();
+        }
+      }
+
+      function checkLogin() {
+        const user = document.getElementById("loginUser").value;
+        const pass = document.getElementById("loginPass").value;
+        if (user === ADMIN_USER && pass === ADMIN_PASS) {
+          document.body.style.display = "block";
+          document.getElementById("login").classList.add("hidden");
+          document.getElementById("dashboard").classList.remove("hidden");
+          renderCSVTable();
+        } else {
+          document.getElementById("loginMsg").textContent =
+            "Invalid username or password!";
+        }
+      }
+    </script>
+  </body>
+</html>
